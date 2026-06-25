@@ -1,0 +1,2 @@
+Hello, my name is Dmitry.
+Hello, I am Python!
