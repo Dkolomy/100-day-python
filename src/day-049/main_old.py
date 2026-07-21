@@ -29,55 +29,42 @@ driver = webdriver.Chrome(options=chrome_options)
 # Navigate to site
 driver.get(GYM_URL)
 
+# ----------------  Step 2 - Automated Login ----------------
+
 # Alternative to using time.sleep(): use a standalone wait object
 wait = WebDriverWait(driver, 2)
 
-# ----------------  Step 9: Network Resilience ----------------
+# Click login button to go to login page
+login_btn = wait.until(ec.element_to_be_clickable((By.ID, "login-button")))
+login_btn.click()
 
-# Simple retry wrapper
-def retry(func, retries=7, description=None):
-    for i in range(retries):
-        print(f"Trying {description}. Attempt: {i + 1}")
-        try:
-            return func()
-        except TimeoutException:
-            if i == retries - 1:
-                raise
-            time.sleep(1)
+# Fill in login form
+email_input = wait.until(ec.presence_of_element_located((By.ID, "email-input")))
+email_input.clear()
+email_input.send_keys(ACCOUNT_EMAIL)
 
-# Function to perform entire login process with retry
-def login():
-  login_btn = wait.until(ec.element_to_be_clickable((By.ID, "login-button")))
-  login_btn.click()
+password_input = driver.find_element(By.ID, "password-input")
+password_input.clear()
+password_input.send_keys(ACCOUNT_PASSWORD)
 
-  email_input = wait.until(ec.presence_of_element_located((By.ID, "email-input")))
-  email_input.clear()
-  email_input.send_keys(ACCOUNT_EMAIL)
+# Click Login
+submit_btn = driver.find_element(By.ID, "submit-button")
+submit_btn.click()
 
-  password_input = driver.find_element(By.ID, "password-input")
-  password_input.clear()
-  password_input.send_keys(ACCOUNT_PASSWORD)
-
-  submit_btn = driver.find_element(By.ID, "submit-button")
-  submit_btn.click()
-
-  wait.until(ec.presence_of_element_located((By.ID, "schedule-page")))
-
-# Function to book a class process that checks if the button text changed with retry
-def book_class(booking_button):
-  booking_button.click()
-  # Wait for button state to change - will time out if booking failed
-  wait.until(lambda d: booking_button.text == "Booked")
-
-# Put the entire login flow into the retry-wrapper
-retry(login, description="login")
+# Wait for schedule page to load
+wait.until(ec.presence_of_element_located((By.ID, "schedule-page")))
 
 # Find all class cards
 class_cards = driver.find_elements(By.CSS_SELECTOR, "div[id^='class-card-']")
+
 # Counters for booked classes for the booking summary
 booked_count = 0
 waitlist_count = 0
 already_booked_count = 0
+
+# ----------------  Step 6: Book EVERY Tuesday AND Thursday 6pm class ----------------
+# ----------------         and print a detailed class summary         ----------------
+
 processed_classes = []
 
 for card in class_cards:
@@ -150,25 +137,18 @@ total_booked = already_booked_count + booked_count + waitlist_count
 print(f"\n--- Total Tuesday/Thursday 6pm classes: {total_booked} ---")
 print("\n--- VERIFYING ON MY BOOKINGS PAGE ---")
 
-# Function to navigate to my bookings with retry
-def get_my_bookings():
-  my_bookings_link = wait.until(ec.element_to_be_clickable((By.ID, "my-bookings-link")))
-  my_bookings_link.click()
-  # Wait for page to load - will time out if navigation failed
-  wait.until(ec.presence_of_element_located((By.ID, "my-bookings-page")))
+# Navigate to My Bookings page
+my_bookings_link = driver.find_element(By.ID, "my-bookings-link")
+my_bookings_link.click()
 
-  cards = driver.find_elements(By.CSS_SELECTOR, "div[id*='card-']")
-
-  # Ensure we actually found cards - if empty, the page might not have loaded
-  if not cards:
-    raise TimeoutException("No booking cards found - page may not have loaded")
-  return cards
-
-# Put navigation to the Bookings page and get cards in the retry wrapper
-all_cards = retry(get_my_bookings, description="Get my bookings")
+# Wait for My Bookings page to load
+wait.until(ec.presence_of_element_located((By.ID, "my-bookings-page")))
 
 # Count all Tuesday/Thursday 6pm bookings
 verified_count = 0
+
+# Find ALL booking cards (both confirmed and waitlist)
+all_cards = driver.find_elements(By.CSS_SELECTOR, "div[id*='card-']")
 
 for card in all_cards:
     try:
@@ -194,7 +174,14 @@ if total_booked == verified_count:
 else:
     print(f"❌ MISMATCH: Missing {total_booked - verified_count} bookings")
 
+
+
+
+
+
 # Getting a SessionNotCreatedException?
 # Remember to *Quit* Selenium's Chrome Instance before trying to click "run"
+
+
 
 # driver.quit()
