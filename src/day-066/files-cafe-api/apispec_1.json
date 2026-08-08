@@ -1,0 +1,190 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Cafe & Wifi API",
+    "description": "REST API for discovering cafes with wifi, sockets, toilets, and coffee prices.",
+    "version": "1.0.0"
+  },
+  "host": "127.0.0.1:5000",
+  "basePath": "/",
+  "schemes": ["http"],
+  "tags": [
+    {
+      "name": "Cafes",
+      "description": "Cafe lookup and management endpoints"
+    }
+  ],
+  "definitions": {
+    "Cafe": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "example": 1 },
+        "name": { "type": "string", "example": "Cafe Nerds" },
+        "map_url": { "type": "string", "example": "https://maps.example.com/cafe" },
+        "img_url": { "type": "string", "example": "https://images.example.com/cafe.jpg" },
+        "location": { "type": "string", "example": "Peckham" },
+        "seats": { "type": "string", "example": "20-30" },
+        "has_toilet": { "type": "boolean", "example": true },
+        "has_wifi": { "type": "boolean", "example": true },
+        "has_sockets": { "type": "boolean", "example": true },
+        "can_take_calls": { "type": "boolean", "example": false },
+        "coffee_price": { "type": "string", "example": "£2.50" }
+      }
+    },
+    "CafeResponse": {
+      "type": "object",
+      "properties": {
+        "cafe": { "$ref": "#/definitions/Cafe" }
+      }
+    },
+    "CafesResponse": {
+      "type": "object",
+      "properties": {
+        "cafes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Cafe" }
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "SuccessResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "string" }
+      }
+    }
+  },
+  "paths": {
+    "/random": {
+      "get": {
+        "tags": ["Cafes"],
+        "summary": "Get a random cafe",
+        "description": "Returns a single randomly selected cafe from the database.",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "A random cafe",
+            "schema": { "$ref": "#/definitions/CafeResponse" }
+          }
+        }
+      }
+    },
+    "/all": {
+      "get": {
+        "tags": ["Cafes"],
+        "summary": "Get all cafes",
+        "description": "Returns every cafe in the database.",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "List of all cafes",
+            "schema": { "$ref": "#/definitions/CafesResponse" }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["Cafes"],
+        "summary": "Search cafes by location",
+        "description": "Find cafes that match the given location query parameter.",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "loc",
+            "in": "query",
+            "description": "Location to search for (e.g. Peckham)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching cafes, or an error object if none found",
+            "schema": { "$ref": "#/definitions/CafesResponse" }
+          }
+        }
+      }
+    },
+    "/update-price/{cafe_id}": {
+      "patch": {
+        "tags": ["Cafes"],
+        "summary": "Update a cafe coffee price",
+        "description": "Updates the coffee_price for the cafe with the given id.",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "cafe_id",
+            "in": "path",
+            "description": "ID of the cafe to update",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "new_price",
+            "in": "query",
+            "description": "New coffee price (e.g. £5.67)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price updated successfully",
+            "schema": { "$ref": "#/definitions/SuccessResponse" }
+          },
+          "404": {
+            "description": "Cafe not found",
+            "schema": { "$ref": "#/definitions/ErrorResponse" }
+          }
+        }
+      }
+    },
+    "/report-closed/{cafe_id}": {
+      "delete": {
+        "tags": ["Cafes"],
+        "summary": "Delete a closed cafe",
+        "description": "Deletes a cafe by id. Requires a valid api-key query parameter.",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "cafe_id",
+            "in": "path",
+            "description": "ID of the cafe to delete",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "api-key",
+            "in": "query",
+            "description": "API key required for deletion (TopSecretAPIKey)",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cafe deleted successfully",
+            "schema": { "$ref": "#/definitions/SuccessResponse" }
+          },
+          "403": {
+            "description": "Invalid or missing API key",
+            "schema": { "$ref": "#/definitions/ErrorResponse" }
+          },
+          "404": {
+            "description": "Cafe not found",
+            "schema": { "$ref": "#/definitions/ErrorResponse" }
+          }
+        }
+      }
+    }
+  }
+}
