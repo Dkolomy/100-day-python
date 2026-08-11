@@ -2,6 +2,7 @@
 .venv/
 venv/
 env/
+day-070/
 
 # Python cache
 __pycache__/
