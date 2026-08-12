@@ -13,6 +13,13 @@ __pycache__/
 .env
 .env.*
 
+### Also any macOS specific files
+.AppleDouble
+.LSOverride
+Icon
+# and thumbnails
+._*
+
 # IDE / OS
 .idea/
 .vscode/
